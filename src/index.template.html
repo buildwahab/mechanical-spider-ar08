@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="AR-08 is a fictional mechanical spider presented as an interactive, self-contained Three.js simulator with procedural 3D geometry, animation modes, exploded views and a live engineering dashboard.">
+<meta name="theme-color" content="#f2f0ea">
+<meta name="color-scheme" content="light">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23101113'/%3E%3Ccircle cx='32' cy='32' r='9' fill='%23ff6a00'/%3E%3Cpath d='M24 24 11 14M23 30H7M24 39 11 49M40 24l13-10M41 30h16M40 39l13 10' fill='none' stroke='%23ff6a00' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<title>MECH-BIO | AR-08 Mechanical Spider</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="viewport" aria-label="Interactive 3D mechanical spider simulator"></canvas>
+  <div class="canvas-grade"></div>
+  <div class="hud-grid"></div>
+  <svg id="leaderLayer" class="leader-layer" aria-hidden="true"></svg>
+  <svg id="dimensionLayer" class="dimension-layer" aria-hidden="true"></svg>
+  <div id="calloutLayer" class="callout-layer"></div>
+
+  <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+    <defs>
+      <symbol id="i-overview" viewBox="0 0 24 24"><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="12" r="3.1" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 6.5v2M12 15.5v2M6.5 12h2M15.5 12h2" fill="none" stroke="currentColor" stroke-width="1.3"/></symbol>
+      <symbol id="i-structure" viewBox="0 0 24 24"><path d="M12 3 20 7.5v9L12 21l-8-4.5v-9L12 3Z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m4.3 7.7 7.7 4.2 7.7-4.2M12 12v8.7M7.3 5.3l8 4.4v9" fill="none" stroke="currentColor" stroke-width="1.1" opacity=".7"/></symbol>
+      <symbol id="i-systems" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M9.5 9.5h5v5h-5zM9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></symbol>
+      <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M2 12h4l2.2-6 4 13 2.6-7H22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-explode" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="7" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 7V3h4M17 3h4v4M21 17v4h-4M7 21H3v-4" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="m5 5 3 3M19 5l-3 3M19 19l-3-3M5 19l3-3" fill="none" stroke="currentColor" stroke-width="1.1" opacity=".6"/></symbol>
+      <symbol id="i-blueprint" viewBox="0 0 24 24"><path d="M4 20 20 4M4 14l6 6M10 8l6 6" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="6" cy="18" r="2.1" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M16 3h5v5" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M8.5 5.5v13l10-6.5-10-6.5Z" fill="currentColor"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><rect x="7" y="5" width="3.4" height="14" rx=".8" fill="currentColor"/><rect x="13.6" y="5" width="3.4" height="14" rx=".8" fill="currentColor"/></symbol>
+      <symbol id="i-first" viewBox="0 0 24 24"><path d="M6 5v14M19 6.2v11.6L9.5 12 19 6.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+      <symbol id="i-prev" viewBox="0 0 24 24"><path d="M17 6.2v11.6L7.5 12 17 6.2Z" fill="currentColor"/><path d="M5 5v14" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+      <symbol id="i-next" viewBox="0 0 24 24"><path d="M7 6.2v11.6L16.5 12 7 6.2Z" fill="currentColor"/><path d="M19 5v14" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+      <symbol id="i-replay" viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2.1-5M19 4v5h-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+      <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M5 9a8 8 0 0 1 13.5-2M19 15a8 8 0 0 1-13.5 2M19 3v6h-6M5 21v-6h6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+      <symbol id="i-zoom" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m15.3 15.3 4.7 4.7M10.5 7.5v6M7.5 10.5h6" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
+      <symbol id="i-cursor" viewBox="0 0 24 24"><path d="m6 3 12 8.2-5.2 1.1-2.8 5.1L6 3Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+      <symbol id="i-focus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></symbol>
+      <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4.5 10a8 8 0 1 1 1 7M4 4v6h6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+      <symbol id="i-power" viewBox="0 0 24 24"><path d="M13 2 4.5 13H11l-1 9 8.5-11H12l1-9Z" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linejoin="round"/></symbol>
+      <symbol id="i-temp" viewBox="0 0 24 24"><path d="M10 14.5V5a2 2 0 1 1 4 0v9.5a4 4 0 1 1-4 0Z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M12 9v7" stroke="currentColor" stroke-width="1.4"/></symbol>
+      <symbol id="i-hydraulic" viewBox="0 0 24 24"><path d="M8 3h8v4H8zM11 7v4h2V7M10 11h4v4h-4zM11 15v6h2v-6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5 5h3M16 5h3M5 19h6M13 19h6" fill="none" stroke="currentColor" stroke-width="1.2"/></symbol>
+      <symbol id="i-sensor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><path d="M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8" fill="none" stroke="currentColor" stroke-width="1.3"/></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+      <symbol id="i-core" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" fill="none" stroke="currentColor" stroke-width="1.3"/></symbol>
+      <symbol id="i-camera" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8 7l1.4-2h5.2L16 7" fill="none" stroke="currentColor" stroke-width="1.3"/></symbol>
+      <symbol id="i-expand" viewBox="0 0 24 24"><path d="M9 4H4v5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+      <symbol id="i-tool" viewBox="0 0 24 24"><path d="M14.5 6.5a4 4 0 0 0-5.3 5L3 18.7 5.3 21l7.2-6.2a4 4 0 0 0 5-5.3l-2.5 2.5-2.5-2.5 2-3Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+      <symbol id="i-spider" viewBox="0 0 120 90"><g fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M52 28C41 19 30 13 18 16c5 6 15 9 25 15M50 32C35 27 21 29 11 36c8 6 20 5 32 3M50 39C35 40 23 46 15 56c10 2 22-4 30-10M52 47C41 53 34 64 28 74c10-3 18-12 23-20"/>
+        <path d="M68 28c11-9 22-15 34-12-5 6-15 9-25 15M70 32c15-5 29-3 39 4-8 6-20 5-32 3M70 39c15 1 27 7 35 17-10 2-22-4-30-10M68 47c11 6 18 17 24 27-10-3-18-12-23-20"/>
+        <ellipse cx="60" cy="51" rx="13" ry="17" fill="#fff"/><ellipse cx="60" cy="31" rx="8.5" ry="10" fill="#fff"/>
+        <path d="M55 23c-3-3-7-4-10-2M65 23c3-3 7-4 10-2M56 28l-4-1M64 28l4-1M60 54v9M53 52h14"/>
+        <circle cx="58" cy="29" r="1.1" fill="currentColor"/><circle cx="62" cy="29" r="1.1" fill="currentColor"/><circle cx="60" cy="26" r=".8" fill="currentColor"/>
+      </g></symbol>
+      <symbol id="i-diamond" viewBox="0 0 24 24"><path d="M12 3 21 12l-9 9-9-9 9-9Z" fill="none" stroke="currentColor" stroke-width="1.3"/></symbol>
+    </defs>
+  </svg>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark"><span>AR</span></div>
+      <div class="brand-text"><strong>MECH-BIO LAB</strong><small>ROBOTICS RESEARCH</small></div>
+    </div>
+    <nav class="main-tabs" role="tablist" aria-label="Dashboard sections">
+      <button class="tab-btn active" data-tab="overview" role="tab" aria-label="Overview"><svg class="ico"><use href="#i-overview"/></svg><span>OVERVIEW</span></button>
+      <button class="tab-btn" data-tab="structure" role="tab" aria-label="Structure"><svg class="ico"><use href="#i-structure"/></svg><span>STRUCTURE</span></button>
+      <button class="tab-btn" data-tab="systems" role="tab" aria-label="Systems"><svg class="ico"><use href="#i-systems"/></svg><span>SYSTEMS</span></button>
+      <button class="tab-btn" data-tab="animation" role="tab" aria-label="Animation"><svg class="ico"><use href="#i-pulse"/></svg><span>ANIMATION</span></button>
+      <button class="tab-btn" data-tab="exploded" role="tab" aria-label="Exploded view"><svg class="ico"><use href="#i-explode"/></svg><span>EXPLODED VIEW</span></button>
+      <button class="tab-btn" data-tab="blueprint" role="tab" aria-label="Blueprint"><svg class="ico"><use href="#i-blueprint"/></svg><span>BLUEPRINT</span></button>
+    </nav>
+    <div class="system-meta">
+      <div class="render-stat"><span>RENDER</span><b id="fpsValue">— FPS</b></div>
+      <div class="online"><i></i><span>SYSTEM : ONLINE</span></div>
+      <button class="icon-btn" id="fullscreenBtn" title="Toggle full screen" aria-label="Toggle full screen"><svg class="ico"><use href="#i-expand"/></svg></button>
+    </div>
+  </header>
+  <main class="workspace">
+    <section class="rail rail-left">
+      <div class="identity">
+        <div class="eyebrow"><span class="badge">MECH-BIO</span><span>SERIES 08</span></div>
+        <h1>MECHANICAL<br>SPIDER</h1>
+        <div class="ar-line"><span>AR-08</span><em>REV C</em><em>FICTIONAL STUDY</em></div>
+        <h2>All-Terrain Exploration &amp; Recon Unit</h2>
+        <p>A high-mobility robotic spider engineered for surveillance, inspection and operation in complex multi-terrain environments.</p>
+        <div class="spec-list">
+          <div class="spec-row"><svg class="sicon"><use href="#i-structure"/></svg><span class="key">TERRAIN</span><span class="val">Land / Vertical / Rough</span></div>
+          <div class="spec-row"><svg class="sicon"><use href="#i-expand"/></svg><span class="key">SPAN</span><span class="val">5.10 m (design)</span></div>
+          <div class="spec-row"><svg class="sicon"><use href="#i-expand"/></svg><span class="key">LENGTH</span><span class="val">3.60 m (design)</span></div>
+          <div class="spec-row"><svg class="sicon"><use href="#i-expand"/></svg><span class="key">HEIGHT</span><span class="val">1.55 m (stance)</span></div>
+          <div class="spec-row"><svg class="sicon"><use href="#i-power"/></svg><span class="key">MASS</span><span class="val">184 kg dry / 198 kg wet</span></div>
+          <div class="spec-row"><svg class="sicon"><use href="#i-power"/></svg><span class="key">POWER</span><span class="val">Solid-state Li-Ti / 2.8 kWh</span></div>
+          <div class="spec-row"><svg class="sicon"><use href="#i-pulse"/></svg><span class="key">RUNTIME</span><span class="val">6.5 h nominal</span></div>
+        </div>
+        <div class="spec-note">ALL VALUES ARE FICTIONAL DESIGN TARGETS</div>
+      </div>
+
+      <div class="left-panels">
+        <section class="panel tab-panel active" data-tab-panel="overview">
+          <div class="panel-head"><span class="head-dot"></span><span>MODE</span><em>OPERATING</em></div>
+          <div id="modeList" class="mode-list"></div>
+        </section>
+
+        <section class="panel tab-panel" data-tab-panel="structure">
+          <div class="panel-head"><span class="head-dot"></span><span>ASSEMBLY HIERARCHY</span><em>AR-08</em></div>
+          <div id="hierarchy" class="tree"></div>
+          <div class="tree-foot"><span><b id="partCount">—</b> DETAILS</span><span><b id="meshCount">—</b> COMPONENTS</span></div>
+          <div class="tool-row">
+            <button class="small-btn" id="jointAxesBtn"><svg class="ico"><use href="#i-focus"/></svg>JOINT AXES</button>
+            <button class="small-btn" id="structureXrayBtn"><svg class="ico"><use href="#i-layers"/></svg>X-RAY</button>
+          </div>
+        </section>
+
+        <section class="panel tab-panel" data-tab-panel="systems">
+          <div class="panel-head"><span class="head-dot"></span><span>X-RAY &amp; MATERIALS</span><em>ONLINE</em></div>
+          <div class="toggle-row"><span class="tlabel"><svg class="ico"><use href="#i-layers"/></svg>Transparent armor</span><button class="switch" id="transparentSwitch" role="switch" aria-checked="false" aria-label="Transparent armor"></button></div>
+          <div class="toggle-row"><span class="tlabel"><svg class="ico"><use href="#i-core"/></svg>Internal scan</span><button class="switch" id="internalSwitch" role="switch" aria-checked="false" aria-label="Internal scan"></button></div>
+          <div class="toggle-row"><span class="tlabel"><svg class="ico"><use href="#i-structure"/></svg>Structural wireframe</span><button class="switch" id="wireframeSwitch" role="switch" aria-checked="false" aria-label="Structural wireframe"></button></div>
+          <div class="toggle-row"><span class="tlabel"><svg class="ico"><use href="#i-camera"/></svg>GTAO ambient occlusion</span><button class="switch on" id="aoSwitch" role="switch" aria-checked="true" aria-label="Ambient occlusion"></button></div>
+          <div class="chips-label" style="margin-top:10px">SYSTEM BUS</div>
+          <div class="sys-list">
+            <div class="sys-item"><svg class="sico"><use href="#i-core"/></svg><div><b>Power Core</b><small>LI-TI / 2.8 KWH</small></div><span class="spill">NOMINAL</span></div>
+            <div class="sys-item"><svg class="sico"><use href="#i-hydraulic"/></svg><div><b>Hydraulic Ring</b><small>8 CH / 210 BAR</small></div><span class="spill" id="busHyd">NOMINAL</span></div>
+            <div class="sys-item"><svg class="sico"><use href="#i-sensor"/></svg><div><b>Optic Network</b><small>12 CH / MULTI-SPECTRUM</small></div><span class="spill">NOMINAL</span></div>
+            <div class="sys-item"><svg class="sico"><use href="#i-pulse"/></svg><div><b>Gait Controller</b><small>ALT-TETRAPOD / 32 SERVO</small></div><span class="spill">LOCKED</span></div>
+          </div>
+        </section>
+
+        <section class="panel tab-panel" data-tab-panel="animation">
+          <div class="panel-head"><span class="head-dot"></span><span>MOTION PROFILE</span><em>ALT-TETRA</em></div>
+          <div class="toggle-row"><span class="tlabel"><svg class="ico"><use href="#i-pulse"/></svg>Gait governor</span><button class="switch on" id="gaitGovernorSwitch" role="switch" aria-checked="true" aria-label="Gait governor"></button></div>
+          <div style="margin-top:7px">
+            <div class="slabel mini-note"><span>GAIT FREQUENCY</span><b><span id="gaitFreqVal">1.00</span>×</b></div>
+            <div class="range-line"><input id="gaitFreq" type="range" min="0.55" max="1.8" step="0.05" value="1" aria-label="Gait frequency"><span class="range-val" id="gaitFreqOut">1.00</span></div>
+            <div class="mini-note" style="margin-top:7px"><span>STRIDE LENGTH</span><b><span id="gaitStrideVal">1.00</span>×</b></div>
+            <div class="range-line"><input id="gaitStride" type="range" min="0.65" max="1.45" step="0.05" value="1" aria-label="Stride length"><span class="range-val" id="gaitStrideOut">1.00</span></div>
+            <div class="mini-note" style="margin-top:7px"><span>FOOT LIFT</span><b><span id="gaitLiftVal">1.00</span>×</b></div>
+            <div class="range-line"><input id="gaitLift" type="range" min="0.4" max="1.6" step="0.05" value="1" aria-label="Foot lift"><span class="range-val" id="gaitLiftOut">1.00</span></div>
+          </div>
+          <div class="mini-note" style="margin-top:9px"><span>GAIT PHASE GROUPS</span><b id="gaitPhaseLabel">GROUP A</b></div>
+          <div id="gaitDots" style="display:flex;gap:4px;margin-top:5px"></div>
+          <div class="tree-foot"><span>CONTACT PLANES</span><span><b id="plantedCount">8</b> / 8</span></div>
+        </section>
+
+        <section class="panel tab-panel" data-tab-panel="exploded">
+          <div class="panel-head"><span class="head-dot"></span><span>ASSEMBLY EXTRACTION</span><em id="explodeCount">0 / 14</em></div>
+          <div id="explodeList" class="explode-list"></div>
+          <div class="explode-actions">
+            <button class="small-btn" id="explodeAllBtn"><svg class="ico"><use href="#i-explode"/></svg>EXTRACT ALL</button>
+            <button class="small-btn" id="explodeNoneBtn"><svg class="ico"><use href="#i-reset"/></svg>ASSEMBLE</button>
+          </div>
+        </section>
+
+        <section class="panel tab-panel" data-tab-panel="blueprint">
+          <div class="panel-head"><span class="head-dot"></span><span>DRAWING VIEWS</span><em>ORTHO</em></div>
+          <div class="view-grid">
+            <button class="view-btn" data-bp-view="iso"><svg><use href="#i-structure"/></svg>ISOMETRIC</button>
+            <button class="view-btn" data-bp-view="top"><svg><use href="#i-focus"/></svg>TOP</button>
+            <button class="view-btn" data-bp-view="front"><svg><use href="#i-structure"/></svg>FRONT</button>
+            <button class="view-btn" data-bp-view="side"><svg><use href="#i-structure"/></svg>SIDE</button>
+            <button class="view-btn" data-bp-view="rear"><svg><use href="#i-replay"/></svg>REAR</button>
+            <button class="view-btn" data-bp-view="reset"><svg><use href="#i-reset"/></svg>RESET</button>
+          </div>
+          <div class="chips-label" style="margin-top:10px">SECTION CUT</div>
+          <div class="axis-row">
+            <button class="axis-btn active" data-cut="off">OFF</button>
+            <button class="axis-btn" data-cut="x">X</button>
+            <button class="axis-btn" data-cut="y">Y</button>
+            <button class="axis-btn" data-cut="z">Z</button>
+          </div>
+          <div class="range-line" style="margin-top:5px"><input id="sectionSlider" type="range" min="-1.8" max="1.8" step="0.01" value="0" aria-label="Section cut position"><span class="range-val" id="sectionVal">0.00</span></div>
+          <div class="chips-label" style="margin-top:10px">DRAWING AIDS</div>
+          <div class="toggle-row"><span class="tlabel">Dimensions</span><button class="switch on" id="dimensionsSwitch" role="switch" aria-checked="true" aria-label="Dimensions"></button></div>
+          <div class="toggle-row"><span class="tlabel">Joint axes</span><button class="switch" id="jointAxesBpSwitch" role="switch" aria-checked="false" aria-label="Joint axes"></button></div>
+          <div class="toggle-row"><span class="tlabel">Edge wireframe</span><button class="switch" id="wireframeBpSwitch" role="switch" aria-checked="false" aria-label="Edge wireframe"></button></div>
+        </section>
+      </div>
+    </section>
+
+    <div class="center-ui">
+      <div class="section-heading">
+        <div class="section-kicker">SECTION <b id="sectionNumber">01</b></div>
+        <h2 id="sectionTitle">OVERVIEW</h2>
+        <p id="sectionCaption">Complete assembly with live systems. Hover and click any component to inspect.</p>
+      </div>
+      <div class="view-badges">
+        <span class="view-badge">MODEL <b>AR-08</b></span>
+        <span class="view-badge">REV <b>C</b> / UNIT 01</span>
+      </div>
+      <div class="blueprint-frame">
+        <span class="bp-tag" id="bpTag">ORTHOGRAPHIC / AR-08-01 / SCALE 1:8</span>
+      </div>
+      <div class="helperbar">
+        <span class="helper-item"><svg class="ico"><use href="#i-rotate"/></svg><b>DRAG</b> ROTATE</span>
+        <span class="helper-item"><svg class="ico"><use href="#i-zoom"/></svg><b>SCROLL</b> ZOOM</span>
+        <span class="helper-item"><svg class="ico"><use href="#i-cursor"/></svg><b>CLICK</b> SELECT</span>
+        <span class="helper-item"><svg class="ico"><use href="#i-focus"/></svg><b>DOUBLE-CLICK</b> FOCUS</span>
+        <button class="helper-reset" id="resetCameraHelp"><svg class="ico"><use href="#i-reset"/></svg>RESET CAMERA</button>
+      </div>
+      <div id="hoverTip" class="hover-tip"><b></b><span></span></div>
+    </div>
+
+    <aside class="rail rail-right">
+      <section class="panel tab-panel active" data-tab-panel="overview">
+        <div class="panel-head"><span class="head-dot"></span><span>OVERVIEW</span><em>SECTION 01</em></div>
+        <div class="toggle-row"><span class="tlabel"><svg class="ico"><use href="#i-rotate"/></svg>Auto-rotate</span><button class="switch on" id="autoRotateSwitch" role="switch" aria-checked="true" aria-label="Auto rotate"></button></div>
+        <div class="toggle-row"><span class="tlabel"><svg class="ico"><use href="#i-focus"/></svg>Callouts</span><button class="switch on" id="calloutsSwitch" role="switch" aria-checked="true" aria-label="Callouts"></button></div>
+        <div class="chips-label">EXTERNAL COMPONENTS</div>
+        <div class="overview-components">
+          <div id="componentChips" class="chips">
+            <button class="chip" data-part="carapace">Cephalothorax</button>
+            <button class="chip" data-part="abdomen">Abdomen</button>
+            <button class="chip" data-part="leg_L1">Leg Assembly</button>
+            <button class="chip" data-part="pedipalp_L">Pedipalp</button>
+            <button class="chip" data-part="fang_L">Chelicerae</button>
+            <button class="chip" data-part="eyes">Sensor Array</button>
+            <button class="chip" data-part="spinneret">Spinneret</button>
+            <button class="chip" data-part="armor">Armor Plating</button>
+          </div>
+          <div class="spider-sketch"><svg viewBox="0 0 120 90"><use href="#i-spider"/></svg></div>
+        </div>
+        <div class="mini-note"><span>8 LEGS / 32 SERVOS</span><b>ALT-TETRAPOD</b></div>
+      </section>
+
+      <section class="panel tab-panel" data-tab-panel="structure">
+        <div class="panel-head"><span class="head-dot"></span><span>STRUCTURAL READOUT</span><em>LIVE</em></div>
+        <div class="status-grid">
+          <div class="stat-cell"><div class="slabel"><span>DRY MASS</span><b>184 kg</b></div><div class="bar orange"><i style="width:82%"></i></div></div>
+          <div class="stat-cell"><div class="slabel"><span>PAYLOAD</span><b>26 kg</b></div><div class="bar"><i style="width:38%"></i></div></div>
+          <div class="stat-cell"><div class="slabel"><span>RIGIDITY</span><b>96.2%</b></div><div class="bar"><i style="width:96%"></i></div></div>
+          <div class="stat-cell"><div class="slabel"><span>DAMPING</span><b>87.4%</b></div><div class="bar amber"><i style="width:87%"></i></div></div>
+        </div>
+        <div class="spec-list" style="margin-top:9px">
+          <div class="spec-row noicon"><span class="key">FRAME</span><span class="val">Titanium space-frame + CF ribs</span></div>
+          <div class="spec-row noicon"><span class="key">ARMOR</span><span class="val">Alumina ceramic / 4.2 mm</span></div>
+          <div class="spec-row noicon"><span class="key">JOINTS</span><span class="val">32 servo / 8 hydraulic dampers</span></div>
+        </div>
+        <div class="mini-note" style="margin-top:9px"><span>API-LEVEL ASSEMBLY</span><b id="drawCalls">— DRAW CALLS</b></div>
+        <div class="mini-note"><span>GEOMETRY BUS</span><b id="triCount">— TRIS</b></div>
+        <button class="small-btn" id="inspectGearBtn" style="margin-top:8px;width:100%"><svg class="ico"><use href="#i-tool"/></svg>INSPECT L1 KNEE GEARBOX</button>
+      </section>
+
+      <section class="panel tab-panel" data-tab-panel="systems">
+        <div class="panel-head"><span class="head-dot"></span><span>DIAGNOSTICS</span><em>TELEMETRY</em></div>
+        <div class="chart-head"><span>HYDRAULIC PRESSURE / MOTOR LOAD</span><b>LIVE</b></div>
+        <canvas id="sysChart" class="diag-chart" width="560" height="172"></canvas>
+        <div class="gauge-row">
+          <div class="gauge"><div class="glabel">CORE TEMP</div><div class="gval"><span id="sysTemp">46.8</span><small>°C</small></div><div class="bar amber"><i id="sysTempBar" style="width:48%"></i></div></div>
+          <div class="gauge"><div class="glabel">HYDRAULIC</div><div class="gval"><span id="sysHyd">72</span><small>BAR</small></div><div class="bar orange"><i id="sysHydBar" style="width:72%"></i></div></div>
+        </div>
+        <div class="mini-note" style="margin-top:8px"><span>GTAO / HDR / 8×MSAA</span><b id="renderQualityLabel">POST ACTIVE</b></div>
+        <div class="mini-note"><span>DRAW / TRIANGLES</span><b id="renderInfo">—</b></div>
+      </section>
+
+      <section class="panel tab-panel" data-tab-panel="animation">
+        <div class="panel-head"><span class="head-dot"></span><span>MANUAL JOINT CONTROL</span><em>IK</em></div>
+        <div class="toggle-row"><span class="tlabel"><svg class="ico"><use href="#i-tool"/></svg>Manual pose override</span><button class="switch" id="manualSwitch" role="switch" aria-checked="false" aria-label="Manual pose"></button></div>
+        <div id="manualLegButtons" class="axis-row" style="margin-top:5px"></div>
+        <div class="mini-note" style="margin-top:8px"><span>HIP YAW OFFSET</span><b><span id="manualYawVal">0</span>°</b></div>
+        <div class="range-line"><input id="manualYaw" type="range" min="-38" max="38" step="1" value="0" aria-label="Hip yaw offset"><span class="range-val" id="manualYawOut">0°</span></div>
+        <div class="mini-note" style="margin-top:7px"><span>FOOT REACH</span><b><span id="manualReachVal">1.00</span>×</b></div>
+        <div class="range-line"><input id="manualReach" type="range" min="0.62" max="1.18" step="0.01" value="1" aria-label="Foot reach"><span class="range-val" id="manualReachOut">1.00</span></div>
+        <div class="mini-note" style="margin-top:7px"><span>FOOT LIFT</span><b><span id="manualLiftVal">0.00</span> m</b></div>
+        <div class="range-line"><input id="manualLift" type="range" min="0" max="1.1" step="0.01" value="0" aria-label="Manual foot lift"><span class="range-val" id="manualLiftOut">0.00</span></div>
+        <div class="status-grid" style="margin-top:9px">
+          <div class="stat-cell"><div class="slabel"><span>HIP YAW</span><b id="angleHip">—</b></div></div>
+          <div class="stat-cell"><div class="slabel"><span>FEMUR</span><b id="angleFemur">—</b></div></div>
+          <div class="stat-cell"><div class="slabel"><span>TIBIA</span><b id="angleTibia">—</b></div></div>
+          <div class="stat-cell"><div class="slabel"><span>CONTACT</span><b id="contactState">PLANTED</b></div></div>
+        </div>
+        <button class="small-btn" id="manualResetBtn" style="margin-top:8px;width:100%"><svg class="ico"><use href="#i-reset"/></svg>RESET MANUAL OFFSET</button>
+      </section>
+
+      <section class="panel tab-panel" data-tab-panel="exploded">
+        <div class="panel-head"><span class="head-dot"></span><span>EXPLOSION CONTROL</span><em>SPRING</em></div>
+        <div class="mini-note"><span>SEPARATION DISTANCE</span><b><span id="explodeAmountVal">0</span>%</b></div>
+        <div class="range-line"><input id="explodeSlider" type="range" min="0" max="100" step="1" value="0" aria-label="Explosion separation"><span class="range-val" id="explodeAmountOut">0%</span></div>
+        <div class="toggle-row" style="margin-top:5px"><span class="tlabel"><svg class="ico"><use href="#i-focus"/></svg>Exploded leader lines</span><button class="switch on" id="explodeCalloutsSwitch" role="switch" aria-checked="true" aria-label="Exploded leader lines"></button></div>
+        <div class="status-grid" style="margin-top:5px">
+          <div class="stat-cell"><div class="slabel"><span>EXTRACTED</span><b id="extractedCount">0</b></div></div>
+          <div class="stat-cell"><div class="slabel"><span>ASSEMBLY CODE</span><b>AR-08-E</b></div></div>
+        </div>
+        <div class="mini-note" style="margin-top:8px"><span>REASSEMBLY LAW</span><b>CRITICAL SPRING</b></div>
+        <button class="small-btn" id="gearboxInspectBtn" style="margin-top:8px;width:100%"><svg class="ico"><use href="#i-tool"/></svg>INSPECT GEARBOX / L1</button>
+      </section>
+
+      <section class="panel tab-panel" data-tab-panel="blueprint">
+        <div class="panel-head"><span class="head-dot"></span><span>DRAWING DATA</span><em>CONTROLLED</em></div>
+        <div class="bp-meta">
+          <div><span>DRAWING</span><b>AR-08 / SHEET 04</b></div>
+          <div><span>PROJECTION</span><b>ORTHOGRAPHIC</b></div>
+          <div><span>SCALE</span><b>1 : 8 (REF)</b></div>
+          <div><span>UNITS</span><b>METRES</b></div>
+          <div><span>ENVELOPE</span><b>5.10 × 3.60 × 1.55</b></div>
+          <div><span>STATUS</span><b>FICTIONAL DESIGN</b></div>
+        </div>
+        <div class="chips-label" style="margin-top:10px">DIMENSIONAL TARGETS</div>
+        <div class="spec-list" style="padding-bottom:3px">
+          <div class="spec-row noicon"><span class="key">SPAN</span><span class="val">5.100 m ± 0.015</span></div>
+          <div class="spec-row noicon"><span class="key">LENGTH</span><span class="val">3.600 m ± 0.010</span></div>
+          <div class="spec-row noicon"><span class="key">HEIGHT</span><span class="val">1.550 m ± 0.008</span></div>
+          <div class="spec-row noicon"><span class="key">MASS</span><span class="val">184.0 kg (dry)</span></div>
+        </div>
+        <div class="mini-note" style="margin-top:8px"><span>ANNOTATIONS</span><b id="bpDimState">VISIBLE</b></div>
+        <div class="mini-note"><span>DATUM</span><b>A / CEPHALOTHORAX BASE</b></div>
+        <button class="small-btn" id="bpWireToggleBtn" style="margin-top:8px;width:100%"><svg class="ico"><use href="#i-structure"/></svg>TOGGLE EDGE WIREFRAME</button>
+      </section>
+
+      <section class="panel selected-panel" id="selectedPanel">
+        <div class="panel-head"><span class="head-dot"></span><span>SELECTED COMPONENT</span><button class="panel-mini" id="clearSelection" title="Clear selection"><svg class="ico"><use href="#i-reset"/></svg></button></div>
+        <div class="selected-title"><h3 id="selectedName">Leg Assembly — L1</h3><span class="tag" id="selectedCategory">LOCOMOTION</span></div>
+        <div class="selected-body">
+          <div class="preview" id="selectedPreview"></div>
+          <div class="selected-props">
+            <div class="prop-row"><span class="pkey">FUNCTION</span><span class="pval" id="selectedFunction">Loading, stability, terrain adaptation</span></div>
+            <div class="prop-row"><span class="pkey">MATERIAL</span><span class="pval" id="selectedMaterial">Titanium alloy / carbon composite</span></div>
+            <div class="prop-row"><span class="pkey">JOINTS</span><span class="pval" id="selectedJoints">Coxa / femur / patella / tibia / tarsus</span></div>
+            <div class="prop-row"><span class="pkey">ACTUATION</span><span class="pval" id="selectedActuation">Servo motor + hydraulic damper</span></div>
+            <div class="prop-row"><span class="pkey">RANGE</span><span class="pval orange" id="selectedRange">0–160° / multi-axis</span></div>
+          </div>
+        </div>
+        <div class="conn-list" id="selectedConnections"></div>
+        <div class="selected-actions">
+          <button class="small-btn primary" id="focusPartBtn"><svg class="ico"><use href="#i-focus"/></svg>FOCUS PART</button>
+          <button class="small-btn" id="inspectSystemBtn"><svg class="ico"><use href="#i-systems"/></svg>SYSTEMS</button>
+        </div>
+      </section>
+
+      <section class="panel tab-panel active" data-tab-panel="overview">
+        <div class="panel-head"><span class="head-dot"></span><span>SYSTEM STATUS</span><em>LIVE</em></div>
+        <div class="status-grid">
+          <div class="stat-cell"><div class="slabel"><span>POWER</span><b id="powerVal">92.4%</b></div><div class="bar"><i id="powerBar" style="width:92%"></i></div></div>
+          <div class="stat-cell"><div class="slabel"><span>MOTOR LOAD</span><b id="loadVal">38%</b></div><div class="bar orange"><i id="loadBar" style="width:38%"></i></div></div>
+          <div class="stat-cell"><div class="slabel"><span>CORE TEMP</span><b id="tempVal">46.8 °C</b></div><div class="bar amber"><i id="tempBar" style="width:48%"></i></div></div>
+          <div class="stat-cell"><div class="slabel"><span>HYDRAULIC</span><b id="hydVal">72%</b></div><div class="bar orange"><i id="hydBar" style="width:72%"></i></div></div>
+        </div>
+        <div class="servo-foot">
+          <span class="led"><i></i>SERVOS <b id="servoCount">32 / 32</b></span>
+          <span class="led"><i></i>MOTORS <b>8 / 8</b></span>
+          <span class="led"><i></i>SENSORS <b>12 / 12</b></span>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <section class="timeline-card">
+      <div class="timeline-head">
+        <span class="tl-label">ANIMATION TIMELINE</span>
+        <span class="mode-select-wrap"><select id="modeSelect" aria-label="Animation mode"><option value="walk">Walking (Forward)</option><option value="sideways">Strafe (Lateral)</option><option value="crawl">Crawl (Stealth)</option><option value="climb">Climb (Vertical)</option><option value="dash">Dash (High Speed)</option><option value="defense">Defense (Threat)</option><option value="idle">Idle (Standby)</option></select></span>
+        <span class="timecode"><b id="timeNow">00:04.32</b> / 00:12.00</span>
+      </div>
+      <div class="timeline" id="timeline">
+        <div class="rail-line"></div>
+        <div class="rail-fill" id="timelineFill"></div>
+        <div class="tick filled" style="left:0%"></div>
+        <div class="tick" style="left:25%"></div>
+        <div class="tick" style="left:50%"></div>
+        <div class="tick" style="left:75%"></div>
+        <div class="playhead" id="playhead" style="left:36%"></div>
+        <input class="rail-input" id="timelineScrub" type="range" min="0" max="12" step="0.01" value="4.32" aria-label="Timeline scrub">
+      </div>
+      <div class="transport">
+        <button class="t-btn" id="btnFirst" title="Go to start" aria-label="Go to start"><svg class="ico"><use href="#i-first"/></svg></button>
+        <button class="t-btn" id="btnPrev" title="Previous frame" aria-label="Previous frame"><svg class="ico"><use href="#i-prev"/></svg></button>
+        <button class="t-btn play-btn" id="playPause" title="Play / pause" aria-label="Play or pause"><svg class="ico"><use id="playIcon" href="#i-pause"/></svg></button>
+        <button class="t-btn" id="btnNext" title="Next frame" aria-label="Next frame"><svg class="ico"><use href="#i-next"/></svg></button>
+        <button class="t-btn" id="btnRestart" title="Restart timeline" aria-label="Restart timeline"><svg class="ico"><use href="#i-replay"/></svg></button>
+        <div class="speed-group">
+          <span class="speed-label">SPEED</span>
+          <div class="speed-btns">
+            <button class="speed-btn" data-speed="0.5">0.5×</button>
+            <button class="speed-btn active" data-speed="1">1.0×</button>
+            <button class="speed-btn" data-speed="1.5">1.5×</button>
+            <button class="speed-btn" data-speed="2">2.0×</button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="camera-card">
+      <div class="panel-head"><span class="head-dot"></span><span>CAMERA</span><em id="cameraModeTag">PERSPECTIVE</em></div>
+      <div class="cam-grid">
+        <button class="cam-btn active" data-camera="iso" aria-label="Isometric camera"><svg viewBox="0 0 24 24"><path d="M12 3 21 8v8l-9 5-9-5V8l9-5ZM3 8l9 5 9-5M12 13v8"/></svg>ISO</button>
+        <button class="cam-btn" data-camera="front" aria-label="Front camera"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"/><circle cx="12" cy="12" r="3"/><path d="M12 1v3"/></svg>FRONT</button>
+        <button class="cam-btn" data-camera="side" aria-label="Side camera"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"/><path d="M2 12h3M19 12h3"/></svg>SIDE</button>
+        <button class="cam-btn" data-camera="top" aria-label="Top camera"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>TOP</button>
+        <button class="cam-btn" data-camera="rear" aria-label="Rear camera"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"/><path d="M12 23v-3M8 16l4 4 4-4"/></svg>REAR</button>
+        <button class="cam-btn" data-camera="reset" aria-label="Reset camera"><svg viewBox="0 0 24 24"><path d="M4.5 10a8 8 0 1 1 1 7M4 4v6h6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>RESET</button>
+      </div>
+    </section>
+    <section class="sketch-card" aria-label="Technical view shortcuts">
+      <button class="view-sketch" data-camera="front" aria-label="Front drawing view">
+        <svg viewBox="0 0 100 62" fill="none" stroke="currentColor" stroke-width=".9"><path d="M50 12c8 0 13 5 13 12 0 6-4 10-7 14M50 12c-8 0-13 5-13 12 0 6 4 10 7 14M39 26 17 18 6 31l11 8 13-5M39 33 12 36l4 11 16-4M43 40 21 50l8 9 16-11M44 46 34 60h14M61 26l22-8 11 13-11 8-13-5M61 33l27 3-4 11-16-4M57 40l22 10-8 9-16-11M56 46l10 14H52"/><circle cx="50" cy="28" r="6"/></svg>
+        <span>FRONT</span>
+      </button>
+      <button class="view-sketch" data-camera="side" aria-label="Side drawing view">
+        <svg viewBox="0 0 100 62" fill="none" stroke="currentColor" stroke-width=".9"><path d="M35 23c7-7 19-8 27-2 5 4 6 10 3 15-4 7-15 10-23 6-7-3-10-12-7-19Z"/><path d="M64 29c10-2 18 0 24 6-7 3-14 2-22 1M36 36c-5 7-7 13-10 20l13-4M41 40c-3 7-4 13-5 20l13-8M50 41c0 7 1 13 3 19l8-14M59 39c3 7 6 12 11 17l3-16M31 25 22 17l-8 7M64 22l8-8 11 5"/></svg>
+        <span>SIDE</span>
+      </button>
+      <button class="view-sketch" data-camera="top" aria-label="Top drawing view">
+        <svg viewBox="0 0 100 62" fill="none" stroke="currentColor" stroke-width=".9"><ellipse cx="50" cy="39" rx="10" ry="13"/><circle cx="50" cy="20" r="6"/><path d="M43 18 27 10H11M45 21 21 21 8 30M45 25 22 31 12 43M46 29 29 44 22 55M57 18l16-8h16M55 21l24 0 13 9M55 25l23 6 10 12M54 29l17 15 7 11"/></svg>
+        <span>TOP</span>
+      </button>
+    </section>
+  </footer>
+
+  <div id="toast" class="toast"><i></i><span id="toastText"></span></div>
+  <div id="loading" class="loading">
+    <div class="loading-inner">
+      <div class="load-mark">AR</div>
+      <div class="load-title">AR-08</div>
+      <div class="load-sub">INITIALIZING KINEMATIC CORE</div>
+      <div class="load-bar"><i id="bootBar"></i></div>
+      <div class="load-log" id="loadLog">MOUNTING PROCEDURAL GEOMETRY BUS</div>
+      <div class="load-code">MECH-BIO / ROBOTICS RESEARCH / FICTIONAL ENGINEERING STUDY</div>
+    </div>
+  </div>
+  <div id="errorScreen" class="error-screen">
+    <div><h2>RENDER CORE UNAVAILABLE</h2><p id="errorText">This simulator needs WebGL. Enable hardware acceleration or open it in a current desktop browser.</p></div>
+  </div>
+</div>
+<script src="three.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+# Temporary test harnesses, probes and screenshots
+/_test/
+/shots/
+*.log
+*.tmp
+
+# Editor and OS files
+.vscode/
+.idea/
+.history/
+*.code-workspace
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+*.bak
+
+# Dependency, build and deployment caches
+node_modules/
+.vercel/
+.cache/
+
+# Archives
+*.zip
+*.7z
